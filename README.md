@@ -68,3 +68,138 @@ Using Set instead of List prevents duplicates
 
 **Cascades**
 Cascades define how changes in one entity affect the other
+
+**Why author_id instead of user_id in Post entity**
+This is primarily a semantic/naming convention choice. Here's why author_id is better:
+
+- Domain Language Alignment: In a blog context, a User becomes an "Author" when they create posts. This better reflects the domain terminology.
+
+- Clarity of Relationship: It's immediately clear that this ID refers to the author of the post, not just any user.
+
+- Future Flexibility: If you later need to add other user relationships (like editors, reviewers), having specific names helps distinguish them.
+
+- Database Readability: When examining the database schema, author_id is more descriptive than user_id in the posts table.
+
+**About @RequiredArgsConstructor vs @Autowired**
+   `@RequiredArgsConstructor`:
+- Part of Lombok
+
+- Generates a constructor with all final fields or fields marked with @NonNull
+
+- More concise and reduces boilerplate
+
+- Makes dependencies clearly immutable (when using final)
+
+Example from the project:
+
+`
+@RestController
+@RequestMapping("/api/v1/categories")
+@RequiredArgsConstructor
+public class CategoryController {
+private final CategoryService categoryService;
+// Lombok generates constructor:
+// public CategoryController(CategoryService categoryService) {...}
+}`
+
+`@Autowired`:
+* Spring's native annotation
+
+* Can be used on fields, setters, or constructors
+
+* Field injection is generally discouraged (makes testing harder, hides dependencies)
+
+* Constructor injection is preferred (explicit dependencies, immutable)
+
+**Why prefer @RequiredArgsConstructor:**
+
+1. Immutability: Forces you to use final fields 
+2. Cleaner Code: Less boilerplate 
+3. Testability: Easier to mock dependencies in tests 
+4. Best Practice: Aligns with Spring's recommendation of constructor injection
+
+**Interface + Implementation Pattern**
+The separation into CategoryService interface and CategoryServiceImpl class is a best practice because:
+
+* Abstraction: Interface defines the contract, implementation handles details
+
+* Flexibility: Easy to swap implementations (e.g., for testing, different environments)
+
+* Testability: Can mock the interface in tests
+
+* Clean Architecture: Follows Dependency Inversion Principle
+
+* Multiple Implementations: You might have different implementations (e.g., for caching)
+
+**Your approach (single class) works but has limitations:**
+
+* Harder to mock for testing
+
+* Less flexible for future changes
+
+* Violates "program to interfaces" principle
+
+**About the N+1 Problem and LEFT JOIN FETCH**
+**The N+1 Problem:**
+When you fetch a list of categories (1 query), then for each category, Hibernate makes another query to fetch its posts (N queries). This is inefficient.
+
+Solution with **LEFT JOIN FETCH**:
+`
+@Query("SELECT c FROM Category c LEFT JOIN FETCH c.posts")
+List<Category> findAllWithPostCount();`
+
+This:
+* Fetches categories and their posts in a single query
+
+* Uses Hibernate's fetch joining capability
+
+* Avoids the performance penalty of N+1 queries
+
+**How to Apply This Knowledge:**
+* Always Be Aware of N+1: When you see entity relationships, consider the query implications.
+
+* Use Fetch Joins: For operations where you know you'll need related entities.
+
+* Profile Your Queries: Use spring.jpa.show-sql=true during development to see what queries are executed.
+
+* Consider Lazy/Eager Loading:
+- Lazy (default): Load relationships only when accessed
+- Eager: Load relationships immediately
+- Fetch joins override these settings for that specific query
+* 
+* DTO Projection: Another approach is to use DTO projections with JPQL to fetch only needed data.
+
+**Calculating Post Count:**
+The project uses a clever approach in the mapper:
+`
+@Named("calculatePostCount")
+default long calculatePostCount(Set<Post> posts) {
+if (posts == null) return 0;
+return posts.stream()
+.filter(post -> PostStatus.PUBLISHED.equals(post.getStatus()))
+.count();
+}`
+
+This:
+* Filters only published posts
+* 
+* Counts them
+* 
+* Is applied during the DTO mapping process
+
+**Key Takeaways for Your Development:**
+* Always consider the performance implications of relationships
+
+* Use JPQL/HQL fetch joins when you need related entities
+
+* Profile your queries during development
+
+* Consider DTO projections for read operations
+
+* Complex calculations can often be handled in mappers
+
+**Topics to revisit**
+1. [x] Mapping the diff ways
+2. [x] Stream API
+3. [x] Error handling in SpringBoot
+4. [x] Optional 
