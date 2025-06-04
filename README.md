@@ -203,3 +203,12 @@ This:
 2. [x] Stream API
 3. [x] Error handling in SpringBoot
 4. [x] Optional 
+5. constants in place of enums
+6. csrf and cors
+7. Session management
+
+Creating Auth Endpoints
+1. Create response and request dtos.
+2. Create endpoints in the controller 
+3. a service interface containing the methods 
+4. an implementation of the interface; implements the Authentication Manager
