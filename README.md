@@ -1,3 +1,5 @@
+**Concepts learnt**
+
 **UUID vs Long ID with Identity Generation**
 1. **UUID Approach**
 `@Id
@@ -198,8 +200,18 @@ This:
 
 * Complex calculations can often be handled in mappers
 
+
+**Spring Security Dependencies**
+* Spring Security core
+* jjwt-impl
+* jjwt api
+* jjwt jackson
+- all the jwt dependencies should be of the same version.
+
+
 **Topics to revisit**
 1. [x] Mapping the diff ways
 2. [x] Stream API
 3. [x] Error handling in SpringBoot
 4. [x] Optional 
+5. Authentication Manage.\, password encoders
