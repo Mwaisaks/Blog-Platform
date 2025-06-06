@@ -198,6 +198,24 @@ This:
 
 * Complex calculations can often be handled in mappers
 
+Here's what you need to know about Dispatcher Servlet in Spring
+It's the heart of Spring MVC framework, lemme explain to you why.
+
+The title should be UserDetails and UserDetailsService because the two work together. Lemme show you how;
+
+UserDetails Service is an interface for loading User Specific data from the database or an external service.
+It has one method loadUserByUsername() which takes in the username and returns a fully-populated UserDetails object
+The UserDetails object represents an authenticated user and contains details likeusername, password, authorities and additional attributes
+
+InMemoryUserDetailsManager class- an implementation of UserDetailsService, that stores user details in memory,
+only used in testing/development.
+User class - 
+
+Creating Authentication Endpoints
+create the dtos; LoginRequest, LoginResponse make use of lombok
+
+**UserDetails Vs UserDetailsService**
+
 **Topics to revisit**
 1. [x] Mapping the diff ways
 2. [x] Stream API
