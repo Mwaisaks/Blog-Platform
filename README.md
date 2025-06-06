@@ -229,4 +229,8 @@ Creating Auth Endpoints
 1. Create response and request dtos.
 2. Create endpoints in the controller 
 3. a service interface containing the methods 
-4. an implementation of the interface; implements the Authentication Manager
+4. an implementation of the interface; implements the Authentication 
+
+**Creating other Endpoints**
+* Create the dtos, and get the variables included, integrate lombok where needed
+* 
