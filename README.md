@@ -226,7 +226,7 @@ create the dtos; LoginRequest, LoginResponse make use of lombok
 7. Session management
 
 Creating Auth Endpoints
-1. Create response and request dtos.
+1. Create response and request dtos. Do the mapping( where necessary)
 2. Create endpoints in the controller 
 3. a service interface containing the methods 
 4. an implementation of the interface; implements the Authentication 
