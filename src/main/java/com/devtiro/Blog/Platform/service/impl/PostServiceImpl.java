@@ -2,6 +2,7 @@ package com.devtiro.Blog.Platform.service.impl;
 
 import com.devtiro.Blog.Platform.domain.CreatePostRequest;
 import com.devtiro.Blog.Platform.domain.PostStatus;
+import com.devtiro.Blog.Platform.domain.dtos.UpdatePostRequest;
 import com.devtiro.Blog.Platform.domain.entity.Category;
 import com.devtiro.Blog.Platform.domain.entity.Post;
 import com.devtiro.Blog.Platform.domain.entity.Tag;
@@ -10,6 +11,7 @@ import com.devtiro.Blog.Platform.repository.PostRepository;
 import com.devtiro.Blog.Platform.service.CategoryService;
 import com.devtiro.Blog.Platform.service.PostService;
 import com.devtiro.Blog.Platform.service.TagService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -84,6 +87,41 @@ public class PostServiceImpl implements PostService {
 
         return postRepository.save(newPost);
 
+    }
+
+    @Override
+    @Transactional
+    public Post updatepost(UUID id, UpdatePostRequest updatePostRequest) {
+        Post existingPost = postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Post doesn't exist with id: " + id));
+
+        existingPost.setTitle(updatePostRequest.getTitle());
+
+        String postContent = updatePostRequest.getContent();
+        existingPost.setContent(updatePostRequest.getContent());
+        existingPost.setStatus(updatePostRequest.getStatus());
+        existingPost.setReadingTime(calculateReadingTime(postContent));
+
+        UUID updatePostRequestCategoryId = updatePostRequest.getCategoryId();
+        if (!existingPost.getCategory().getId().equals(updatePostRequestCategoryId)){
+            Category newCategory = categoryService.getCategoryById(updatePostRequestCategoryId);
+            existingPost.setCategory(newCategory);
+        }
+
+        Set<UUID> existingTagIds = existingPost.getTags().stream().map(Tag::getId).collect(Collectors.toSet());
+        Set<UUID> updatePostRequestTagIds = updatePostRequest.getTagIds();
+        if (!existingTagIds.equals(updatePostRequestTagIds)){
+            List<Tag> newTags = tagService.getTagByIds(updatePostRequestTagIds);
+            existingPost.setTags(new HashSet<>(newTags));
+        }
+
+        return postRepository.save(existingPost);
+    }
+
+    @Override
+    public Post getPostById(UUID id) {
+        return postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found by id: " + id));
     }
 
     private Integer calculateReadingTime(String content){

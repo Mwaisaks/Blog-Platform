@@ -1,6 +1,7 @@
 package com.devtiro.Blog.Platform.service;
 
 import com.devtiro.Blog.Platform.domain.CreatePostRequest;
+import com.devtiro.Blog.Platform.domain.dtos.UpdatePostRequest;
 import com.devtiro.Blog.Platform.domain.entity.Post;
 import com.devtiro.Blog.Platform.domain.entity.User;
 
@@ -15,4 +16,7 @@ public interface PostService {
 
     Post createPost(User user, CreatePostRequest createPostRequest);
 
+    Post updatepost(UUID id, UpdatePostRequest updatePostRequest);
+
+    Post getPostById(UUID id);
 }

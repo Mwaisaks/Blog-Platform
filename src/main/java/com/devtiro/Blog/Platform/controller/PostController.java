@@ -3,8 +3,11 @@ package com.devtiro.Blog.Platform.controller;
 import com.devtiro.Blog.Platform.domain.CreatePostRequest;
 import com.devtiro.Blog.Platform.domain.dtos.CreatePostRequestDto;
 import com.devtiro.Blog.Platform.domain.dtos.PostDto;
+import com.devtiro.Blog.Platform.domain.dtos.UpdatePostRequest;
+import com.devtiro.Blog.Platform.domain.dtos.UpdatePostRequestDto;
 import com.devtiro.Blog.Platform.domain.entity.User;
 import com.devtiro.Blog.Platform.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import com.devtiro.Blog.Platform.domain.entity.Post;
 import com.devtiro.Blog.Platform.mappers.PostMapper;
@@ -48,7 +51,7 @@ public class PostController {
 
     @PostMapping
     public ResponseEntity<PostDto> createPost(
-            @RequestBody CreatePostRequestDto createPostRequestDto,
+            @Valid @RequestBody CreatePostRequestDto createPostRequestDto,
             @RequestAttribute UUID userId
             ){
 
@@ -61,6 +64,23 @@ public class PostController {
 
     @PutMapping(path = "/{id}")
     public ResponseEntity<PostDto> updatePost(
-            @PathVariable UUID id,
-    )
+            @PathVariable UUID id, @Valid
+            @RequestBody UpdatePostRequestDto updatePostRequestDto
+            ){
+
+        UpdatePostRequest updatePostRequest = postMapper.toUpdatePostRequest(updatePostRequestDto);
+
+        Post updatepost = postService.updatepost(id, updatePostRequest);
+        PostDto updatedPostDto = postMapper.toDto(updatepost);
+        return ResponseEntity.ok(updatedPostDto);
+    }
+
+    @GetMapping(path = "/{id}")
+    public ResponseEntity<PostDto> getPost(
+            @PathVariable UUID id
+    ){
+        Post post = postService.getPostById(id);
+        PostDto postDto = postMapper.toDto(post);
+        return ResponseEntity.ok(postDto);
+    }
 }

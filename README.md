@@ -37,6 +37,8 @@ private UUID id;`
 * Use Long IDENTITY for simple, single-database applications where performance is critical
 * Use UUID when you want to obscure record counts or IDs from users
 
+***
+
 **Handling Time Variables**
 
 **Understanding RelationShips in Spring Boot with JPA**
@@ -69,7 +71,10 @@ Using Set instead of List prevents duplicates
 **Cascades**
 Cascades define how changes in one entity affect the other
 
+***
+
 **Why author_id instead of user_id in Post entity**
+
 This is primarily a semantic/naming convention choice. Here's why author_id is better:
 
 - Domain Language Alignment: In a blog context, a User becomes an "Author" when they create posts. This better reflects the domain terminology.
@@ -79,6 +84,8 @@ This is primarily a semantic/naming convention choice. Here's why author_id is b
 - Future Flexibility: If you later need to add other user relationships (like editors, reviewers), having specific names helps distinguish them.
 
 - Database Readability: When examining the database schema, author_id is more descriptive than user_id in the posts table.
+
+***
 
 **About @RequiredArgsConstructor vs @Autowired**
    `@RequiredArgsConstructor`:
@@ -92,7 +99,7 @@ This is primarily a semantic/naming convention choice. Here's why author_id is b
 
 Example from the project:
 
-`
+```
 @RestController
 @RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
@@ -100,7 +107,8 @@ public class CategoryController {
 private final CategoryService categoryService;
 // Lombok generates constructor:
 // public CategoryController(CategoryService categoryService) {...}
-}`
+}
+```
 
 `@Autowired`:
 * Spring's native annotation
@@ -118,7 +126,10 @@ private final CategoryService categoryService;
 3. Testability: Easier to mock dependencies in tests 
 4. Best Practice: Aligns with Spring's recommendation of constructor injection
 
+***
+
 **Interface + Implementation Pattern**
+
 The separation into CategoryService interface and CategoryServiceImpl class is a best practice because:
 
 * Abstraction: Interface defines the contract, implementation handles details
@@ -139,15 +150,19 @@ The separation into CategoryService interface and CategoryServiceImpl class is a
 
 * Violates "program to interfaces" principle
 
+***
+
 **About the N+1 Problem and LEFT JOIN FETCH**
+
 **The N+1 Problem:**
+
 When you fetch a list of categories (1 query), then for each category, Hibernate makes another query to fetch its posts (N queries). This is inefficient.
 
 Solution with **LEFT JOIN FETCH**:
-`
+```
 @Query("SELECT c FROM Category c LEFT JOIN FETCH c.posts")
 List<Category> findAllWithPostCount();`
-
+```
 This:
 * Fetches categories and their posts in a single query
 
@@ -166,25 +181,27 @@ This:
 - Lazy (default): Load relationships only when accessed
 - Eager: Load relationships immediately
 - Fetch joins override these settings for that specific query
-* 
+
 * DTO Projection: Another approach is to use DTO projections with JPQL to fetch only needed data.
 
 **Calculating Post Count:**
+
 The project uses a clever approach in the mapper:
-`
+```
 @Named("calculatePostCount")
 default long calculatePostCount(Set<Post> posts) {
 if (posts == null) return 0;
 return posts.stream()
 .filter(post -> PostStatus.PUBLISHED.equals(post.getStatus()))
 .count();
-}`
+}
+```
 
 This:
 * Filters only published posts
-* 
+
 * Counts them
-* 
+
 * Is applied during the DTO mapping process
 
 **Key Takeaways for Your Development:**
@@ -198,8 +215,36 @@ This:
 
 * Complex calculations can often be handled in mappers
 
-@RequestParam annotation - allows you to access specific values passed in the URL's query string.
+***
+**`@RequestParam annotation`**
 
+What it does:
+
+* Extracts query parameters from the URL
+
+* Converts them to method parameters
+
+* Optional/required configuration available
+
+```
+@GetMapping
+public ResponseEntity<List<PostDto>> getAllPosts(
+    @RequestParam(required = false) UUID categoryId,
+    @RequestParam(required = false) UUID tagId) {
+    // ...
+}
+```
+
+**Key characteristics:**
+
+* `required = false` makes the parameter optional
+ 
+* Parameters appear in URL like: `/api/v1/posts?categoryId=123&tagId=456`
+
+* Supports type conversion (String → UUID in this case)
+
+* Alternative to `@PathVariable` for non-hierarchical data
+***
 Here's what you need to know about Dispatcher Servlet in Spring
 It's the heart of Spring MVC framework, lemme explain to you why.
 
@@ -213,10 +258,12 @@ InMemoryUserDetailsManager class- an implementation of UserDetailsService, that 
 only used in testing/development.
 User class - 
 
+
 Creating Authentication Endpoints
 create the dtos; LoginRequest, LoginResponse make use of lombok
 
 **UserDetails Vs UserDetailsService**
+
 
 **Topics to revisit**
 1. [x] Mapping the diff ways
@@ -235,4 +282,97 @@ Creating Auth Endpoints
 
 **Creating other Endpoints**
 * Create the dtos, and get the variables included, integrate lombok where needed
-* 
+
+***
+
+**DTO Layering (CreatePostRequestDto vs CreatePostRequest)**
+
+**Why the separation exists in this endpoint:**
+
+1. Separation of Concerns:
+
+* CreatePostRequestDto: Public API contract (what clients send)
+
+* CreatePostRequest: Internal service contract (what services expect)
+
+2. Different Evolution Needs:
+
+* API DTOs change with client needs
+
+* Service DTOs change with business logic
+
+3. Validation Differences:
+
+* API DTO: Basic input validation (@Size, @NotBlank)
+
+* Service DTO: Business rule validation (e.g., valid category ID)
+
+Example from the project:
+
+```
+// API Layer DTO (Controller)
+public class CreatePostRequestDto {
+@NotBlank String title;
+@NotNull UUID categoryId;
+// ... validation annotations
+}
+
+// Service Layer DTO
+public class CreatePostRequest {
+String title; // No annotations
+UUID categoryId;
+// Might contain additional service-layer fields
+}
+```
+**Why not used in previous endpoints?**
+
+* Simplicity: Earlier endpoints had 1:1 mapping between API and service needs
+
+* Complexity Threshold: Post creation involves more:
+* - Complex validation
+* - Multiple relationships (tags, category)
+* - Future extension needs
+
+**When to use this pattern:**
+
+* When API and service models diverge
+
+* When you need different validation rules
+
+* When the API might change independently
+
+* For complex operations with multiple steps
+
+***
+**ResponseEntity Variations**
+
+**1. Static Helper Methods (Preferred)**
+
+```
+return ResponseEntity.ok(postDtos); // HTTP 200 with body
+return ResponseEntity.notFound().build(); // HTTP 404
+return ResponseEntity.created(uri).body(dto); // HTTP 201
+```
+**2. Constructor Approach**
+
+```
+return new ResponseEntity<>(postDtos, HttpStatus.OK);
+return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+```
+**When to use which:**
+
+* Static methods (more readable, fluent API):
+
+ok(), created(), accepted(), noContent()
+
+Most common cases
+
+Better for REST conventions
+
+* Constructors (when you need full control):
+
+Custom headers
+
+Rare status codes
+
+Special cases
