@@ -198,6 +198,8 @@ This:
 
 * Complex calculations can often be handled in mappers
 
+@RequestParam annotation - allows you to access specific values passed in the URL's query string.
+
 Here's what you need to know about Dispatcher Servlet in Spring
 It's the heart of Spring MVC framework, lemme explain to you why.
 
